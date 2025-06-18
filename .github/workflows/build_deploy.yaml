@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++ libgtest-dev cmake
+          sudo apt-get install -y g++ libgtest-dev cmake libboost-system-dev libboost-date-time-dev
 
       - name: Create Build Directory
         run: mkdir build
