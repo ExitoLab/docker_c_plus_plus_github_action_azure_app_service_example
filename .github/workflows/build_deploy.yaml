@@ -4,14 +4,17 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '**'
+      - '!README.md'
+      - '!docs/**'
   pull_request:
     branches:
       - main
-  paths:
-    - '**'
-    - '!README.md'
-    - '!docs/**'
-
+    paths:
+      - '**'
+      - '!README.md'
+      - '!docs/**'
 jobs:
   test:
     runs-on: ubuntu-latest
