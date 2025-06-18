@@ -46,7 +46,6 @@ jobs:
       ACR_NAME: cplusplus
       IMAGE_NAME: cplusplus
       RESOURCE_GROUP: c-plus-plus-project
-      WEBAPP_NAME: cplusplus
       LOCATION: eastus
 
     permissions:
@@ -105,16 +104,25 @@ jobs:
             echo "App Service Plan already exists"
           fi
 
+      - name: Generate Unique App Name
+        id: unique_name
+        run: |
+          UNIQUE_NAME="cplusplus-${{ github.run_number }}-$(echo ${{ github.sha }} | cut -c1-8)"
+          echo "webapp_name=$UNIQUE_NAME" >> $GITHUB_OUTPUT
+          echo "Generated unique app name: $UNIQUE_NAME"
+
       - name: Create App Service with ACR image (if it doesn't exist)
         run: |
-          if ! az webapp show --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.WEBAPP_NAME }} &> /dev/null; then
-            echo "Creating App Service without initial image..."
+          WEBAPP_NAME="${{ steps.unique_name.outputs.webapp_name }}"
+          
+          if ! az webapp show --resource-group ${{ env.RESOURCE_GROUP }} --name $WEBAPP_NAME &> /dev/null; then
+            echo "Creating App Service: $WEBAPP_NAME"
 
             # Create Web App without image first
             az webapp create \
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --plan cplusplus-plan \
-              --name ${{ env.WEBAPP_NAME }}
+              --name $WEBAPP_NAME
 
             echo "Web App created. Now configuring container settings..."
 
@@ -125,7 +133,7 @@ jobs:
             # Configure container settings
             az webapp config container set \
               --resource-group ${{ env.RESOURCE_GROUP }} \
-              --name ${{ env.WEBAPP_NAME }} \
+              --name $WEBAPP_NAME \
               --docker-custom-image-name ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }} \
               --docker-registry-server-url https://${{ env.ACR_NAME }}.azurecr.io \
               --docker-registry-server-user $ACR_USERNAME \
@@ -133,13 +141,18 @@ jobs:
 
             echo "Waiting for App Service to be ready..."
             sleep 30
+            
+            # Store the actual app name for subsequent steps
+            echo "WEBAPP_NAME=$WEBAPP_NAME" >> $GITHUB_ENV
           else
             echo "App Service already exists"
           fi
 
       - name: Update App Service container image
         run: |
-          echo "Updating App Service with new container image..."
+          # Use the webapp name from environment (either existing or newly created)
+          WEBAPP_NAME="${{ env.WEBAPP_NAME }}"
+          echo "Updating App Service: $WEBAPP_NAME with new container image..."
           
           # Get ACR credentials
           ACR_USERNAME=$(az acr credential show --name ${{ env.ACR_NAME }} --query username --output tsv)
@@ -148,7 +161,7 @@ jobs:
           # Update container settings with new image
           az webapp config container set \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --name ${{ env.WEBAPP_NAME }} \
+            --name $WEBAPP_NAME \
             --docker-custom-image-name ${{ steps.meta.outputs.full_image }} \
             --docker-registry-server-url https://${{ env.ACR_NAME }}.azurecr.io \
             --docker-registry-server-user $ACR_USERNAME \
