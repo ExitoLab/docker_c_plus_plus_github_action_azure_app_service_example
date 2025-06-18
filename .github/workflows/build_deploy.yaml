@@ -114,23 +114,28 @@ jobs:
             ACR_USERNAME=$(az acr credential show --name ${{ env.ACR_NAME }} --query username --output tsv)
             ACR_PASSWORD=$(az acr credential show --name ${{ env.ACR_NAME }} --query passwords[0].value --output tsv)
             
-            # Create Web App with actual image and credentials
+            # Create Web App with container image
             az webapp create \
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --plan cplusplus-plan \
               --name ${{ env.WEBAPP_NAME }} \
-              --deployment-container-image-name ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }} \
+              --deployment-container-image-name ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}
+            
+            # Configure container registry auth
+            az webapp config container set \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --name ${{ env.WEBAPP_NAME }} \
+              --docker-custom-image-name ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }} \
               --docker-registry-server-url https://${{ env.ACR_NAME }}.azurecr.io \
               --docker-registry-server-user $ACR_USERNAME \
               --docker-registry-server-password $ACR_PASSWORD
-              
+            
             echo "Waiting for App Service to be ready..."
             sleep 30
           else
             echo "App Service already exists"
           fi
 
-        #### Update App Service with new image ####
       - name: Update App Service container image
         run: |
           echo "Updating App Service with new container image..."
@@ -143,11 +148,10 @@ jobs:
           az webapp config container set \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.WEBAPP_NAME }} \
-            --location eastus2 \
-            --container-image-name ${{ steps.meta.outputs.full_image }} \
-            --container-registry-url https://${{ env.ACR_NAME }}.azurecr.io \
-            --container-registry-user $ACR_USERNAME \
-            --container-registry-password $ACR_PASSWORD
+            --docker-custom-image-name ${{ steps.meta.outputs.full_image }} \
+            --docker-registry-server-url https://${{ env.ACR_NAME }}.azurecr.io \
+            --docker-registry-server-user $ACR_USERNAME \
+            --docker-registry-server-password $ACR_PASSWORD
 
       - name: Restart App Service
         run: |
