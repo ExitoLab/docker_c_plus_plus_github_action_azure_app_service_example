@@ -117,34 +117,33 @@ jobs:
           
           if ! az webapp show --resource-group ${{ env.RESOURCE_GROUP }} --name $WEBAPP_NAME &> /dev/null; then
             echo "Creating App Service: $WEBAPP_NAME"
-
-            # Get ACR credentials
-            ACR_USERNAME=$(az acr credential show --name ${{ env.ACR_NAME }} --query username --output tsv)
-            ACR_PASSWORD=$(az acr credential show --name ${{ env.ACR_NAME }} --query passwords[0].value --output tsv)
             
-            # Verify image exists in ACR
-            echo "Verifying image exists: ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}"
-            
-            # Create Web App with container image directly
+            # Create Web App with container image (no registry auth yet)
             az webapp create \
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --plan cplusplus-plan \
               --name $WEBAPP_NAME \
-              --deployment-container-image-name ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }} \
+              --deployment-container-image-name ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}
+
+            echo "Web App created successfully: $WEBAPP_NAME"
+            
+            # Now configure the registry credentials
+            echo "Configuring ACR credentials..."
+            
+            # Get ACR credentials
+            ACR_USERNAME=$(az acr credential show --name ${{ env.ACR_NAME }} --query username --output tsv)
+            ACR_PASSWORD=$(az acr credential show --name ${{ env.ACR_NAME }} --query passwords[0].value --output tsv)
+            
+            # Configure container registry settings
+            az webapp config container set \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --name $WEBAPP_NAME \
+              --docker-custom-image-name ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }} \
               --docker-registry-server-url https://${{ env.ACR_NAME }}.azurecr.io \
               --docker-registry-server-user $ACR_USERNAME \
               --docker-registry-server-password $ACR_PASSWORD
 
-            echo "Web App created successfully: $WEBAPP_NAME"
-            
-            # Verify the web app was created
-            if az webapp show --resource-group ${{ env.RESOURCE_GROUP }} --name $WEBAPP_NAME &> /dev/null; then
-              echo "Web App verification successful"
-            else
-              echo "Web App creation may have failed"
-              exit 1
-            fi
-            
+            echo "ACR credentials configured"
             echo "Waiting for App Service to be ready..."
             sleep 30
           else
