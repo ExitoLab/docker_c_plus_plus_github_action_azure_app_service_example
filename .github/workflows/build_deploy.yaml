@@ -119,7 +119,6 @@ jobs:
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --plan cplusplus-plan \
               --name ${{ env.WEBAPP_NAME }} \
-              --location eastus2 \
               --deployment-container-image-name ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }} \
               --docker-registry-server-url https://${{ env.ACR_NAME }}.azurecr.io \
               --docker-registry-server-user $ACR_USERNAME \
