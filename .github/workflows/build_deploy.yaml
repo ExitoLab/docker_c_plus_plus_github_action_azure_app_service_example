@@ -118,39 +118,44 @@ jobs:
           if ! az webapp show --resource-group ${{ env.RESOURCE_GROUP }} --name $WEBAPP_NAME &> /dev/null; then
             echo "Creating App Service: $WEBAPP_NAME"
 
-            # Create Web App without image first
-            az webapp create \
-              --resource-group ${{ env.RESOURCE_GROUP }} \
-              --plan cplusplus-plan \
-              --name $WEBAPP_NAME
-
-            echo "Web App created. Now configuring container settings..."
-
             # Get ACR credentials
             ACR_USERNAME=$(az acr credential show --name ${{ env.ACR_NAME }} --query username --output tsv)
             ACR_PASSWORD=$(az acr credential show --name ${{ env.ACR_NAME }} --query passwords[0].value --output tsv)
-
-            # Configure container settings
-            az webapp config container set \
+            
+            # Verify image exists in ACR
+            echo "Verifying image exists: ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}"
+            
+            # Create Web App with container image directly
+            az webapp create \
               --resource-group ${{ env.RESOURCE_GROUP }} \
+              --plan cplusplus-plan \
               --name $WEBAPP_NAME \
-              --docker-custom-image-name ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }} \
+              --deployment-container-image-name ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }} \
               --docker-registry-server-url https://${{ env.ACR_NAME }}.azurecr.io \
               --docker-registry-server-user $ACR_USERNAME \
               --docker-registry-server-password $ACR_PASSWORD
 
+            echo "Web App created successfully: $WEBAPP_NAME"
+            
+            # Verify the web app was created
+            if az webapp show --resource-group ${{ env.RESOURCE_GROUP }} --name $WEBAPP_NAME &> /dev/null; then
+              echo "Web App verification successful"
+            else
+              echo "Web App creation may have failed"
+              exit 1
+            fi
+            
             echo "Waiting for App Service to be ready..."
             sleep 30
-            
-            # Store the actual app name for subsequent steps
-            echo "WEBAPP_NAME=$WEBAPP_NAME" >> $GITHUB_ENV
           else
-            echo "App Service already exists"
+            echo "App Service already exists: $WEBAPP_NAME"
           fi
+          
+          # Store the webapp name for subsequent steps
+          echo "WEBAPP_NAME=$WEBAPP_NAME" >> $GITHUB_ENV
 
       - name: Update App Service container image
         run: |
-          # Use the webapp name from environment (either existing or newly created)
           WEBAPP_NAME="${{ env.WEBAPP_NAME }}"
           echo "Updating App Service: $WEBAPP_NAME with new container image..."
           
@@ -166,6 +171,8 @@ jobs:
             --docker-registry-server-url https://${{ env.ACR_NAME }}.azurecr.io \
             --docker-registry-server-user $ACR_USERNAME \
             --docker-registry-server-password $ACR_PASSWORD
+          
+          echo "Container image updated successfully"
 
       - name: Restart App Service
         run: |
