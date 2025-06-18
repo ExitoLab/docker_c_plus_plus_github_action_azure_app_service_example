@@ -99,7 +99,7 @@ jobs:
               --name cplusplus-plan \
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --is-linux \
-              --sku F1
+              --sku F1 \
               --location eastus2
           else
             echo "App Service Plan already exists"
