@@ -97,8 +97,8 @@ jobs:
           az webapp config container set \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.WEBAPP_NAME }} \
-            --docker-custom-image-name ${{ steps.meta.outputs.tag }} \
-            --docker-registry-server-url https://${{ env.ACR_NAME }}.azurecr.io
+            --container-image-name ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }} \
+            --container-registry-url https://${{ env.ACR_NAME }}.azurecr.io
 
       - name: Azure logout
         run: az logout

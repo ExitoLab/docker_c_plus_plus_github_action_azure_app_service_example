@@ -5,7 +5,7 @@ set -e  # Exit on any error
 # Variables
 ACR_NAME="cplusplus"
 SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-RESOURCE_GROUP="c-plus-plus-projec"
+RESOURCE_GROUP="c-plus-plus-project"
 AZURE_TENANT_ID=$(az account show --query tenantId -o tsv)
 AZURE_AD_APP_NAME="github-c-plus-plus-oidc"
 GITHUB_REPO="ExitoLab/docker_c_plus_plus_github_action_azure_app_service_example"
