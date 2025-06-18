@@ -18,4 +18,6 @@ WORKDIR /app/build
 RUN cmake .. && make
 
 WORKDIR /app/build
+EXPOSE 8080
+
 CMD ["./cpp_project"]

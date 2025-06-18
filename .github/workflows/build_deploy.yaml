@@ -145,7 +145,7 @@ jobs:
 
             echo "ACR credentials configured"
             echo "Waiting for App Service to be ready..."
-            sleep 30
+            sleep 10
           else
             echo "App Service already exists: $WEBAPP_NAME"
           fi
