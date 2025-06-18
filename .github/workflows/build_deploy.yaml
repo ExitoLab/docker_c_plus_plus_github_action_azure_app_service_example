@@ -118,12 +118,12 @@ jobs:
           if ! az webapp show --resource-group ${{ env.RESOURCE_GROUP }} --name $WEBAPP_NAME &> /dev/null; then
             echo "Creating App Service: $WEBAPP_NAME"
             
-            # Create Web App with container image (no registry auth yet)
+            # Create Web App with container image
             az webapp create \
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --plan cplusplus-plan \
               --name $WEBAPP_NAME \
-              --deployment-container-image-name ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}
+              --deployment-container-image-name ${{ steps.meta.outputs.tag }}
 
             echo "Web App created successfully: $WEBAPP_NAME"
             
@@ -138,7 +138,7 @@ jobs:
             az webapp config container set \
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --name $WEBAPP_NAME \
-              --docker-custom-image-name ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }} \
+              --docker-custom-image-name ${{ steps.meta.outputs.tag }} \
               --docker-registry-server-url https://${{ env.ACR_NAME }}.azurecr.io \
               --docker-registry-server-user $ACR_USERNAME \
               --docker-registry-server-password $ACR_PASSWORD
@@ -156,22 +156,37 @@ jobs:
       - name: Update App Service container image
         run: |
           WEBAPP_NAME="${{ env.WEBAPP_NAME }}"
+          
+          # Ensure we have a webapp name
+          if [ -z "$WEBAPP_NAME" ]; then
+            echo "ERROR: WEBAPP_NAME is not set"
+            exit 1
+          fi
+          
           echo "Updating App Service: $WEBAPP_NAME with new container image..."
+          echo "New image: ${{ steps.meta.outputs.tag }}"
           
           # Get ACR credentials
+          echo "Getting ACR credentials..."
           ACR_USERNAME=$(az acr credential show --name ${{ env.ACR_NAME }} --query username --output tsv)
           ACR_PASSWORD=$(az acr credential show --name ${{ env.ACR_NAME }} --query passwords[0].value --output tsv)
           
+          if [ -z "$ACR_USERNAME" ] || [ -z "$ACR_PASSWORD" ]; then
+            echo "ERROR: Failed to get ACR credentials"
+            exit 1
+          fi
+          
           # Update container settings with new image
+          echo "Updating container configuration..."
           az webapp config container set \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --name $WEBAPP_NAME \
-            --docker-custom-image-name ${{ steps.meta.outputs.full_image }} \
-            --docker-registry-server-url https://${{ env.ACR_NAME }}.azurecr.io \
-            --docker-registry-server-user $ACR_USERNAME \
-            --docker-registry-server-password $ACR_PASSWORD
+            --name "$WEBAPP_NAME" \
+            --docker-custom-image-name "${{ steps.meta.outputs.tag }}" \
+            --docker-registry-server-url "https://${{ env.ACR_NAME }}.azurecr.io" \
+            --docker-registry-server-user "$ACR_USERNAME" \
+            --docker-registry-server-password "$ACR_PASSWORD"
           
-          echo "Container image updated successfully"
+          echo "Container image updated successfully to: ${{ steps.meta.outputs.tag }}"
 
       - name: Restart App Service
         run: |
