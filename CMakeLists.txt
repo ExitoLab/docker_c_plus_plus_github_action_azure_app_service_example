@@ -19,6 +19,8 @@ FetchContent_MakeAvailable(crow)
 # Add ASIO include directory manually
 include_directories(${CMAKE_SOURCE_DIR}/asio/asio/include)
 
+include_directories(${CMAKE_SOURCE_DIR}/Crow/include)
+
 # Main app
 add_executable(cpp_project src/main.cpp)
 target_link_libraries(cpp_project PRIVATE crow)
