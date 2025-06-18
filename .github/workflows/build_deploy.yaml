@@ -100,6 +100,7 @@ jobs:
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --is-linux \
               --sku F1
+              --location eastus2
           else
             echo "App Service Plan already exists"
           fi
@@ -118,6 +119,7 @@ jobs:
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --plan cplusplus-plan \
               --name ${{ env.WEBAPP_NAME }} \
+              --location eastus2 \
               --deployment-container-image-name ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }} \
               --docker-registry-server-url https://${{ env.ACR_NAME }}.azurecr.io \
               --docker-registry-server-user $ACR_USERNAME \
@@ -142,6 +144,7 @@ jobs:
           az webapp config container set \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.WEBAPP_NAME }} \
+            --location eastus2 \
             --container-image-name ${{ steps.meta.outputs.full_image }} \
             --container-registry-url https://${{ env.ACR_NAME }}.azurecr.io \
             --container-registry-user $ACR_USERNAME \
