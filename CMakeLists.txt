@@ -7,19 +7,28 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Enable testing
 enable_testing()
 
-# Fetch Crow header-only library
+# Fetch Crow
 include(FetchContent)
 FetchContent_Declare(
   crow
   GIT_REPOSITORY https://github.com/CrowCpp/Crow.git
-  GIT_TAG v1.0+1 # Use stable release (can upgrade to latest)
+  GIT_TAG v1.0+1
 )
 FetchContent_MakeAvailable(crow)
 
-# Add ASIO include directory manually
-include_directories(${CMAKE_SOURCE_DIR}/asio/asio/include)
+# Fetch standalone Asio
+FetchContent_Declare(
+  asio
+  GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
+  GIT_TAG master  # you can lock specific commit if needed
+)
+FetchContent_MakeAvailable(asio)
 
-include_directories(${CMAKE_SOURCE_DIR}/Crow/include)
+# Include Crow and Asio include directories
+include_directories(
+  ${crow_SOURCE_DIR}/include
+  ${asio_SOURCE_DIR}/asio/include
+)
 
 # Main app
 add_executable(cpp_project src/main.cpp)

@@ -30,17 +30,22 @@ jobs:
       - name: Clone Crow library
         run: git clone https://github.com/CrowCpp/Crow.git
 
+      - name: Clone Asio library
+        run: git clone https://github.com/chriskohlhoff/asio.git
+
       - name: Create Build Directory
         run: mkdir build
 
       - name: Configure CMake
-        run: cd build && cmake ..
+        run: |
+          cd build
+          cmake -DCROW_INCLUDE_DIR=../Crow/include -DASIO_INCLUDE_DIR=../asio/asio/include ..
 
       - name: Build
-        run: cd build && make # This is the crucial step!
+        run: cd build && make
 
       - name: Run tests
-        run: ./build/test_project # Use the correct executable name (test_project)
+        run: ./build/test_project
 
   build:
     runs-on: ubuntu-latest
