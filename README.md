@@ -1,6 +1,6 @@
 # Build a C++ Pipeline with Docker, GitHub Actions, ACR and Azure Web App
 
-This project demonstrates creating a robust CI/CD pipeline for a C++ application using Docker, GitHub Actions, and Azure Container Registry (ACR) and Azure Web App.
+This project demonstrates creating a robust CI/CD pipeline for a C++ application using Docker, GitHub Actions, and Azure Container Registry (ACR) and Azure App Service.
 
 ## Table of Contents
 
