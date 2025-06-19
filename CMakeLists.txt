@@ -20,11 +20,11 @@ FetchContent_MakeAvailable(crow)
 FetchContent_Declare(
   asio
   GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
-  GIT_TAG master  # you can lock specific commit if needed
+  GIT_TAG master
 )
 FetchContent_MakeAvailable(asio)
 
-# Include Crow and Asio include directories
+# Include directories
 include_directories(
   ${crow_SOURCE_DIR}/include
   ${asio_SOURCE_DIR}/asio/include
@@ -32,7 +32,6 @@ include_directories(
 
 # Main app
 add_executable(cpp_project src/main.cpp)
-target_link_libraries(cpp_project PRIVATE crow)
 
 # Tests
 add_executable(test_project tests/test_main.cpp)
